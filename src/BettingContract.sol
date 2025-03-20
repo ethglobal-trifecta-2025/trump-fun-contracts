@@ -44,6 +44,7 @@ contract BettingContract is Ownable {
         uint256 createdAt; // Time at which the bet was initially created
         uint256 updatedAt; // Time which bet was updated (ie: if a user added more money to their bet)
         bool isPayedOut; // Whether the bet has been paid out
+        bool isWithdrawn; // Whether the winnings have been withdrawn
         TokenType tokenType; // Type of token used for the bet
     }
 
@@ -89,6 +90,8 @@ contract BettingContract is Ownable {
     error NotBetOwner();
     error InsufficientWithdrawBalance();
     error TokenTypeMismatch();
+    error BetNotPaidOut();
+    error BetAlreadyWithdrawn();
 
     // Events
     event PoolCreated(uint256 poolId, CreatePoolParams params);
@@ -105,6 +108,7 @@ contract BettingContract is Ownable {
         uint256 indexed betId, uint256 indexed poolId, address indexed user, uint256 amount, TokenType tokenType
     );
     event Withdrawal(address indexed user, uint256 amount, TokenType tokenType);
+    event BetWithdrawal(address indexed user, uint256 indexed betId, uint256 amount, TokenType tokenType);
 
     constructor(address _usdc, address _pointsToken) Ownable(msg.sender) {
         usdc = ERC20(_usdc);
@@ -165,6 +169,7 @@ contract BettingContract is Ownable {
                 createdAt: block.timestamp,
                 updatedAt: block.timestamp,
                 isPayedOut: false,
+                isWithdrawn: false,
                 tokenType: tokenType
             });
             bets[betId] = newBet;
@@ -257,16 +262,52 @@ contract BettingContract is Ownable {
         }
     }
 
-    function withdraw(uint256 amount, TokenType tokenType) external {
+    function withdraw(uint256 betId) external {
+        Bet storage bet = bets[betId];
+
+        if (bet.owner != msg.sender) revert NotBetOwner();
+        if (!bet.isPayedOut) revert BetNotPaidOut();
+        if (bet.isWithdrawn) revert BetAlreadyWithdrawn();
+
+        TokenType tokenType = bet.tokenType;
+        uint256 poolId = bet.poolId;
+        Pool storage pool = pools[poolId];
+
+        uint256 amount = 0;
+
+        // Calculate the payout amount based on the bet and pool state
+        if (
+            pool.isDraw || (tokenType == TokenType.USDC && (pool.usdcBetTotals[0] == 0 || pool.usdcBetTotals[1] == 0))
+                || (tokenType == TokenType.POINTS && (pool.pointsBetTotals[0] == 0 || pool.pointsBetTotals[1] == 0))
+        ) {
+            // For draws or one-sided pools, just return the original bet amount
+            amount = bet.amount;
+        } else if (bet.option == pool.winningOption) {
+            // Calculate winnings for correct predictions
+            uint256[2] storage betTotals = tokenType == TokenType.USDC ? pool.usdcBetTotals : pool.pointsBetTotals;
+            uint256 losingOption = pool.winningOption == 0 ? 1 : 0;
+            uint256 winAmount = (bet.amount * betTotals[losingOption]) / betTotals[pool.winningOption] + bet.amount;
+            uint256 fee = (winAmount * PAYOUT_FEE_BP) / 10000;
+            amount = winAmount - fee;
+        } else {
+            // Losing bets get nothing
+            revert ZeroAmount();
+        }
+
         if (amount == 0) revert ZeroAmount();
         if (userBalances[msg.sender][tokenType] < amount) revert InsufficientWithdrawBalance();
 
+        // Mark the bet as withdrawn
+        bet.isWithdrawn = true;
+
+        // Update the user's balance
         userBalances[msg.sender][tokenType] -= amount;
 
+        // Transfer tokens
         ERC20 token = tokenType == TokenType.USDC ? usdc : pointsToken;
         bool success = token.transfer(msg.sender, amount);
         if (!success) revert TokenTransferFailed();
 
-        emit Withdrawal(msg.sender, amount, tokenType);
+        emit BetWithdrawal(msg.sender, betId, amount, tokenType);
     }
 }
