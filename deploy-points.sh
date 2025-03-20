@@ -18,7 +18,6 @@ echo "Please copy the address and update your .env file manually with:"
 echo "POINTS_TOKEN_ADDRESS=\"your_contract_address_here\""
 
 # Verify Points Token if needed
-if [ "$VERIFY_POINTS_TOKEN" = "true" ] && [ -n "$POINTS_TOKEN_ADDRESS" ]; then
     echo "Verifying PointsToken contract..."
     forge verify-contract $POINTS_TOKEN_ADDRESS src/PointsToken.sol:PointsToken \
         --constructor-args $(cast abi-encode "constructor(string,string,uint8,uint256)" "Betting Points" "BPTS" 18 1000000000000000000000000000) \
@@ -29,4 +28,3 @@ if [ "$VERIFY_POINTS_TOKEN" = "true" ] && [ -n "$POINTS_TOKEN_ADDRESS" ]; then
     echo "PointsToken verification attempted. Check Etherscan for confirmation."
 else
     echo "Skipping verification or missing POINTS_TOKEN_ADDRESS."
-fi 
