@@ -33,6 +33,7 @@ contract BettingContract is Ownable {
         uint256 createdAt; // Time at which the bet was created
         string closureCriteria; // Criteria for WHEN a bet should be graded
         string closureInstructions; // Instructions for HOW to decide which option won
+        string originalTruthSocialPostId; // The ID of the original Truth Social post
     }
 
     struct Bet {
@@ -54,6 +55,7 @@ contract BettingContract is Ownable {
         uint40 betsCloseAt;
         string closureCriteria;
         string closureInstructions;
+        string originalTruthSocialPostId;
     }
 
     uint256 public constant PAYOUT_FEE_BP = 90; // 0.9% fee for the payout
@@ -133,6 +135,7 @@ contract BettingContract is Ownable {
         pool.createdAt = block.timestamp;
         pool.closureCriteria = params.closureCriteria;
         pool.closureInstructions = params.closureInstructions;
+        pool.originalTruthSocialPostId = params.originalTruthSocialPostId;
 
         emit PoolCreated(poolId, params);
     }
