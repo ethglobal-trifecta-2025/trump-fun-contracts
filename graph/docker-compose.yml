@@ -19,7 +19,7 @@ services:
       postgres_pass: let-me-in
       postgres_db: graph-node
       ipfs: "ipfs:5001"
-      ethereum: "mainnet:http://host.docker.internal:8545"
+      ethereum: "base-sepolia:https://base-sepolia.g.alchemy.com/v2/aaTYqdoeV1IOX606RuMBcEAVJH59sP2k" # TODO this isn't a public var
       GRAPH_LOG: info
   ipfs:
     image: ipfs/kubo:v0.17.0

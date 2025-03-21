@@ -32,3 +32,6 @@ typechain-types
 
 # Hardhat files
 cache
+
+# Docker volumes
+data/

@@ -44,8 +44,7 @@ contract BettingContract is Ownable {
         uint256 poolId; // Id of the pool the bet belongs to
         uint256 createdAt; // Time at which the bet was initially created
         uint256 updatedAt; // Time which bet was updated (ie: if a user added more money to their bet)
-        bool isPayedOut; // Whether the bet has been paid out
-        bool isWithdrawn; // Whether the winnings have been withdrawn
+        bool isWithdrawn; // Whether the bet has been paid out and winnings have been withdrawn
         TokenType tokenType; // Type of token used for the bet
     }
 
@@ -109,7 +108,6 @@ contract BettingContract is Ownable {
     event PayoutClaimed(
         uint256 indexed betId, uint256 indexed poolId, address indexed user, uint256 amount, TokenType tokenType
     );
-    event Withdrawal(address indexed user, uint256 amount, TokenType tokenType);
     event BetWithdrawal(address indexed user, uint256 indexed betId, uint256 amount, TokenType tokenType);
 
     constructor(address _usdc, address _pointsToken) Ownable(msg.sender) {
@@ -171,7 +169,6 @@ contract BettingContract is Ownable {
                 poolId: poolId,
                 createdAt: block.timestamp,
                 updatedAt: block.timestamp,
-                isPayedOut: false,
                 isWithdrawn: false,
                 tokenType: tokenType
             });
@@ -233,9 +230,9 @@ contract BettingContract is Ownable {
         for (uint256 i = 0; i < betIds.length; i++) {
             uint256 betId = betIds[i];
             if (pools[bets[betId].poolId].status != PoolStatus.GRADED) continue;
-            if (bets[betId].isPayedOut) continue;
+            if (bets[betId].isWithdrawn) continue;
 
-            bets[betId].isPayedOut = true;
+            bets[betId].isWithdrawn = true;
             uint256 poolId = bets[betId].poolId;
             TokenType tokenType = bets[betId].tokenType;
 
@@ -269,7 +266,6 @@ contract BettingContract is Ownable {
         Bet storage bet = bets[betId];
 
         if (bet.owner != msg.sender) revert NotBetOwner();
-        if (!bet.isPayedOut) revert BetNotPaidOut();
         if (bet.isWithdrawn) revert BetAlreadyWithdrawn();
 
         TokenType tokenType = bet.tokenType;

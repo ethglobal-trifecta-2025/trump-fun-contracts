@@ -39,6 +39,4 @@ dataSources:
           handler: handlePoolClosed
         - event: PoolCreated(uint256,(string,string[2],uint40,string,string,string))
           handler: handlePoolCreated
-        - event: Withdrawal(indexed address,uint256,uint8)
-          handler: handleWithdrawal
       file: ./src/betting-contract.ts
