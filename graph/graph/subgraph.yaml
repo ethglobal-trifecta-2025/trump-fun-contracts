@@ -1,0 +1,44 @@
+specVersion: 1.2.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: BettingContract
+    network: base-sepolia
+    source:
+      address: "0x3646Eb6C4459833E3A6791c832b2897051fF17B0"
+      abi: BettingContract
+      startBlock: 23370091
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - BetPlaced
+        - BetWithdrawal
+        - OwnershipTransferred
+        - PayoutClaimed
+        - PoolClosed
+        - PoolCreated
+        - Withdrawal
+      abis:
+        - name: BettingContract
+          file: ./abis/BettingContract.json
+      eventHandlers:
+        - event: BetPlaced(indexed uint256,indexed uint256,indexed address,uint256,uint256,uint8)
+          handler: handleBetPlaced
+        - event: BetWithdrawal(indexed address,indexed uint256,uint256,uint8)
+          handler: handleBetWithdrawal
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: PayoutClaimed(indexed uint256,indexed uint256,indexed address,uint256,uint8)
+          handler: handlePayoutClaimed
+        - event: PoolClosed(indexed uint256,uint256)
+          handler: handlePoolClosed
+        - event: PoolCreated(uint256,(string,string[2],uint40,string,string,string))
+          handler: handlePoolCreated
+        - event: Withdrawal(indexed address,uint256,uint8)
+          handler: handleWithdrawal
+      file: ./src/betting-contract.ts

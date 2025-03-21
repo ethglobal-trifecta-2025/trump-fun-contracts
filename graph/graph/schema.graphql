@@ -1,0 +1,77 @@
+type BetPlaced @entity(immutable: true) {
+  id: Bytes!
+  betId: BigInt! # uint256
+  poolId: BigInt! # uint256
+  user: Bytes! # address
+  optionIndex: BigInt! # uint256
+  amount: BigInt! # uint256
+  tokenType: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type BetWithdrawal @entity(immutable: true) {
+  id: Bytes!
+  user: Bytes! # address
+  betId: BigInt! # uint256
+  amount: BigInt! # uint256
+  tokenType: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PayoutClaimed @entity(immutable: true) {
+  id: Bytes!
+  betId: BigInt! # uint256
+  poolId: BigInt! # uint256
+  user: Bytes! # address
+  amount: BigInt! # uint256
+  tokenType: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PoolClosed @entity(immutable: true) {
+  id: Bytes!
+  poolId: BigInt! # uint256
+  selectedOption: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PoolCreated @entity(immutable: true) {
+  id: Bytes!
+  poolId: BigInt! # uint256
+  params_question: String! # string
+  params_options: [String!]! # string[2]
+  params_betsCloseAt: BigInt! # uint40
+  params_closureCriteria: String! # string
+  params_closureInstructions: String! # string
+  params_originalTruthSocialPostId: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Withdrawal @entity(immutable: true) {
+  id: Bytes!
+  user: Bytes! # address
+  amount: BigInt! # uint256
+  tokenType: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}

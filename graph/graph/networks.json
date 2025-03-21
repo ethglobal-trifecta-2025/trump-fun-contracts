@@ -1,0 +1,8 @@
+{
+  "base-sepolia": {
+    "BettingContract": {
+      "address": "0x3646Eb6C4459833E3A6791c832b2897051fF17B0",
+      "startBlock": 23370091
+    }
+  }
+}
