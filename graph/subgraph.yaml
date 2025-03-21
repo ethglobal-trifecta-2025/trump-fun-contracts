@@ -8,9 +8,9 @@ dataSources:
     name: BettingContract
     network: base-sepolia
     source:
-      address: "0x3646Eb6C4459833E3A6791c832b2897051fF17B0"
+      address: "0x2E180501D3D68241dd0318c68fD9BE0AF1D519a1"
       abi: BettingContract
-      startBlock: 23370091
+      startBlock: 23409014
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -39,4 +39,6 @@ dataSources:
           handler: handlePoolClosed
         - event: PoolCreated(uint256,(string,string[2],uint40,string,string,string))
           handler: handlePoolCreated
+        - event: Withdrawal(indexed address,uint256,uint8)
+          handler: handleWithdrawal
       file: ./src/betting-contract.ts

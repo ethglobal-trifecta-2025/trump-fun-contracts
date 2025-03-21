@@ -9,7 +9,7 @@ contract CreatePoolScript is Script {
         uint256 ownerPrivateKey = vm.envUint("PRIVATE_KEY");
 
         // Get contract address from environment
-        try vm.envAddress("BETTINGPOOLS_CONTRACT_ADDRESS") returns (address contractAddress) {
+        try vm.envAddress("BETTING_CONTRACT_ADDRESS") returns (address contractAddress) {
             // Hardcoded pool parameters instead of using environment variables
             uint256 timestamp = block.timestamp;
 
@@ -35,12 +35,12 @@ contract CreatePoolScript is Script {
             console.log("  Contract:", contractAddress);
 
             BettingContract.CreatePoolParams memory params = BettingContract.CreatePoolParams({
-                question: question,
-                options: options,
-                betsCloseAt: betsCloseAt,
-                closureCriteria: closureCriteria,
-                closureInstructions: closureInstructions,
-                originalTruthSocialPostId: "114197092205719557"
+                question: "test",
+                options: ["yes", "no"],
+                betsCloseAt: 1742586969,
+                closureCriteria: "test",
+                closureInstructions: "test",
+                originalTruthSocialPostId: "114200313009802638"
             });
 
             BettingContract bettingContract = BettingContract(contractAddress);

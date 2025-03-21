@@ -6,6 +6,7 @@ import {
   PayoutClaimed as PayoutClaimedEvent,
   PoolClosed as PoolClosedEvent,
   PoolCreated as PoolCreatedEvent,
+  Withdrawal as WithdrawalEvent,
 } from "../generated/BettingContract/BettingContract";
 import {
   Bet,
@@ -16,6 +17,7 @@ import {
   Pool,
   PoolClosed,
   PoolCreated,
+  Withdrawal,
 } from "../generated/schema";
 
 // @ts-expect-error-next-line
@@ -56,12 +58,6 @@ export function handleBetPlaced(event: BetPlacedEvent): void {
   entity.transactionHash = event.transaction.hash;
   entity.chainName = networkName;
   entity.chainId = BigInt.fromI32(chainId);
-
-  const poolCreated = PoolCreated.load(Bytes.fromUTF8(poolId));
-  if (poolCreated == null) {
-    throw new Error(`PoolCreated not found for id: ${poolId}`);
-  }
-  entity.poolCreated = poolCreated.id;
 
   // Create or update Bet entity
   let bet = Bet.load(betId);
@@ -148,6 +144,25 @@ export function handleBetWithdrawal(event: BetWithdrawalEvent): void {
     bet.isWithdrawn = true;
     bet.save();
   }
+
+  entity.save();
+}
+
+export function handleWithdrawal(event: WithdrawalEvent): void {
+  const networkName = dataSource.network();
+  const chainId = chainIdToNetworkName(networkName);
+
+  const entity = new Withdrawal(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  );
+  entity.user = event.params.user;
+  entity.amount = event.params.amount;
+  entity.tokenType = event.params.tokenType;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.chainName = networkName;
+  entity.chainId = BigInt.fromI32(chainId);
 
   entity.save();
 }

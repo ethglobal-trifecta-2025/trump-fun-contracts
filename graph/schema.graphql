@@ -78,7 +78,6 @@ type BetPlaced @entity(immutable: true) {
 
   chainName: String!
   chainId: BigInt!
-  poolCreated: PoolCreated!
 }
 
 type BetWithdrawal @entity(immutable: true) {

@@ -18,7 +18,8 @@ contract WithdrawScript is Script {
             console.log("  Contract:", contractAddress);
 
             vm.startBroadcast(userPrivateKey);
-            bettingContract.withdraw(betId);
+            //TODO Below is messed up, you should check balance and then withdraw and take token type as input
+            bettingContract.withdraw(BettingContract.TokenType.USDC, 1000000000000000000);
             vm.stopBroadcast();
 
             console.log("Withdrawal successful");
