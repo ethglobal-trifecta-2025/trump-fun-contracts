@@ -39,7 +39,8 @@ contract CreatePoolScript is Script {
                 options: options,
                 betsCloseAt: betsCloseAt,
                 closureCriteria: closureCriteria,
-                closureInstructions: closureInstructions
+                closureInstructions: closureInstructions,
+                originalTruthSocialPostId: "114197092205719557"
             });
 
             BettingContract bettingContract = BettingContract(contractAddress);
