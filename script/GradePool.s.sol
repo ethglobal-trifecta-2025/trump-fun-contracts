@@ -1,50 +1,74 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Script, console} from "forge-std/Script.sol";
+import {Script} from "forge-std/Script.sol";
+import {console} from "forge-std/console.sol";
 import {BettingContract} from "../src/BettingContract.sol";
 
 contract GradePoolScript is Script {
-    function run(uint256 poolId, uint256 responseOption) public {
-        // Get private key from env - needs to be the owner's key
-        uint256 ownerPrivateKey = vm.envUint("PRIVATE_KEY");
+    // Define the parameters to be passed from the command line
+    uint256 public poolId;
+    uint256 public responseOption;
+    uint256 public ownerPrivateKey;
+    BettingContract public bettingContract;
+    address public constant BETTING_CONTRACT = 0x2E180501D3D68241dd0318c68fD9BE0AF1D519a1;
+    
 
-        // Get the contract address
-        try vm.envAddress("BETTING_CONTRACT_ADDRESS") returns (address contractAddress) {
-            BettingContract bettingContract = BettingContract(contractAddress);
 
-            // Log the grading operation
-            console.log("Grading pool:");
-            console.log("  Pool ID:", poolId);
-            console.log("  Response Option:", responseOption);
-            console.log("  Contract:", contractAddress);
+    function setUp() public {
+        // Get owner's private key
+        ownerPrivateKey = vm.envUint("PRIVATE_KEY");
+        
+        // Initialize contract
+        bettingContract = BettingContract(BETTING_CONTRACT);
+        
+        // Log current state
+        console.log("Contract address:", address(bettingContract));
+        console.log("Next pool ID:", bettingContract.nextPoolId());
+    }
 
-            // Validate response option
-            if (responseOption > 2) {
-                console.log("Error: Invalid response option. Must be 0 (option 0), 1 (option 1), or 2 (draw)");
-                revert("Invalid response option");
-            }
+    function run() public {
+        // Get pool ID and response option from environment
+        poolId = vm.envUint("POOL_ID");
+        responseOption = vm.envUint("RESPONSE_OPTION");
 
-            vm.startBroadcast(ownerPrivateKey);
+        // Log grading information
+        console.log("Grading pool", poolId, "with response option", responseOption);
 
-            // Grade the bet
-            bettingContract.gradeBet(poolId, responseOption);
+        // Get pool info first
+        (
+            uint256 id,
+            string memory question,
+            uint40 betsCloseAt,
+            uint256 winningOption,
+            BettingContract.PoolStatus status,
+            bool isDraw,
+            uint256 createdAt,
+            string memory closureCriteria,
+            string memory closureInstructions,
+            string memory originalTruthSocialPostId
+        ) = bettingContract.pools(poolId);
 
-            vm.stopBroadcast();
+        // Log pool info
+        console.log("Pool ID:", id);
+        console.log("Question:", question);
+        console.log("Pool Status:", uint8(status)); // 0 = NONE, 1 = PENDING, 2 = GRADED
+        console.log("Bets Close At:", betsCloseAt);
+        console.log("Current Time:", block.timestamp);
 
-            console.log("Successfully graded pool", poolId, "with option", responseOption);
+        // Check if pool exists and is in correct state
+        require(id > 0, "Pool does not exist");
+        require(status == BettingContract.PoolStatus.PENDING, "Pool is not in PENDING status");
+        require(responseOption <= 2, "Invalid response option (must be 0, 1, or 2)");
 
-            // Log the meaning of the response option
-            if (responseOption == 0) {
-                console.log("Option 0 selected as winner");
-            } else if (responseOption == 1) {
-                console.log("Option 1 selected as winner");
-            } else if (responseOption == 2) {
-                console.log("Pool marked as a draw (refunds will be processed)");
-            }
-        } catch {
-            console.log("Error: BETTING_CONTRACT_ADDRESS environment variable not set");
-            revert("BETTING_CONTRACT_ADDRESS not set");
-        }
+        // Start broadcasting transactions
+        vm.startBroadcast(ownerPrivateKey);
+        
+        // Grade the pool
+        bettingContract.gradeBet(poolId, responseOption);
+        console.log("Successfully graded pool", poolId, "with response option", responseOption);
+        
+        // Stop broadcasting transactions
+        vm.stopBroadcast();
     }
 }
