@@ -227,6 +227,11 @@
             "name": "originalTruthSocialPostId",
             "type": "string",
             "internalType": "string"
+          },
+          {
+            "name": "imageUrl",
+            "type": "string",
+            "internalType": "string"
           }
         ],
         "internalType": "struct BettingContract.CreatePoolParams"
@@ -326,6 +331,11 @@
           },
           {
             "name": "originalTruthSocialPostId",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "imageUrl",
             "type": "string",
             "internalType": "string"
           }

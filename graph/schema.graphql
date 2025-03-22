@@ -48,6 +48,7 @@ type Pool @entity {
   closureCriteria: String!
   closureInstructions: String!
   originalTruthSocialPostId: String!
+  imageUrl: String! # URL of the image associated with the pool
   bets: [Bet!]! @derivedFrom(field: "pool")
 
   createdBlockNumber: BigInt!
@@ -144,6 +145,7 @@ type PoolCreated @entity(immutable: true) {
   params_closureCriteria: String! # string
   params_closureInstructions: String! # string
   params_originalTruthSocialPostId: String! # string
+  params_imageUrl: String! # string
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -157,6 +159,18 @@ type Withdrawal @entity(immutable: true) {
   user: Bytes! # address
   amount: BigInt! # uint256
   tokenType: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+
+  chainName: String!
+  chainId: BigInt!
+}
+
+type PoolImageUrlSet @entity(immutable: true) {
+  id: Bytes!
+  poolId: BigInt! # uint256
+  imageUrl: String! # string
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

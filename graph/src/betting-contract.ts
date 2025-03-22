@@ -6,6 +6,7 @@ import {
   PayoutClaimed as PayoutClaimedEvent,
   PoolClosed as PoolClosedEvent,
   PoolCreated as PoolCreatedEvent,
+  PoolImageUrlSet as PoolImageUrlSetEvent,
   Withdrawal as WithdrawalEvent,
 } from "../generated/BettingContract/BettingContract";
 import {
@@ -17,6 +18,7 @@ import {
   Pool,
   PoolClosed,
   PoolCreated,
+  PoolImageUrlSet,
   Withdrawal,
 } from "../generated/schema";
 
@@ -270,8 +272,8 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   entity.params_betsCloseAt = event.params.params.betsCloseAt;
   entity.params_closureCriteria = event.params.params.closureCriteria;
   entity.params_closureInstructions = event.params.params.closureInstructions;
-  entity.params_originalTruthSocialPostId =
-    event.params.params.originalTruthSocialPostId;
+  entity.params_originalTruthSocialPostId = event.params.params.originalTruthSocialPostId;
+  entity.params_imageUrl = ""; // Initialize with empty string
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
@@ -294,8 +296,8 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.createdAt = event.block.timestamp;
   pool.closureCriteria = event.params.params.closureCriteria;
   pool.closureInstructions = event.params.params.closureInstructions;
-  pool.originalTruthSocialPostId =
-    event.params.params.originalTruthSocialPostId;
+  pool.originalTruthSocialPostId = event.params.params.originalTruthSocialPostId;
+  pool.imageUrl = ""; // Initialize with empty string
   pool.chainName = networkName;
   pool.chainId = BigInt.fromI32(chainId);
 
@@ -315,5 +317,36 @@ export function handlePoolCreated(event: PoolCreatedEvent): void {
   pool.gradedTransactionHash = Bytes.empty();
 
   pool.save();
+  entity.save();
+}
+
+export function handlePoolImageUrlSet(event: PoolImageUrlSetEvent): void {
+  const poolId = event.params.poolId.toString();
+
+  const networkName = dataSource.network();
+  const chainId = chainIdToNetworkName(networkName);
+
+  // Create PoolImageUrlSet entity
+  const entity = new PoolImageUrlSet(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  );
+  entity.poolId = event.params.poolId;
+  entity.imageUrl = event.params.imageUrl;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.chainName = networkName;
+  entity.chainId = BigInt.fromI32(chainId);
+
+  // Update Pool entity
+  const pool = Pool.load(poolId);
+  if (pool != null) {
+    pool.imageUrl = event.params.imageUrl;
+    pool.lastUpdatedBlockNumber = event.block.number;
+    pool.lastUpdatedBlockTimestamp = event.block.timestamp;
+    pool.lastUpdatedTransactionHash = event.transaction.hash;
+    pool.save();
+  }
+
   entity.save();
 }

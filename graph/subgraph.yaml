@@ -22,10 +22,11 @@ dataSources:
         - PayoutClaimed
         - PoolClosed
         - PoolCreated
+        - PoolImageUrlSet
         - Withdrawal
       abis:
         - name: BettingContract
-          file: ./abis/BettingContract.json
+          file: ../out/BettingContract.sol/BettingContract.json
       eventHandlers:
         - event: BetPlaced(indexed uint256,indexed uint256,indexed address,uint256,uint256,uint8)
           handler: handleBetPlaced
@@ -39,6 +40,8 @@ dataSources:
           handler: handlePoolClosed
         - event: PoolCreated(uint256,(string,string[2],uint40,string,string,string))
           handler: handlePoolCreated
+        - event: PoolImageUrlSet(indexed uint256,string)
+          handler: handlePoolImageUrlSet
         - event: Withdrawal(indexed address,uint256,uint8)
           handler: handleWithdrawal
       file: ./src/betting-contract.ts
