@@ -12,16 +12,14 @@ contract GradePoolScript is Script {
     uint256 public ownerPrivateKey;
     BettingContract public bettingContract;
     address public constant BETTING_CONTRACT = 0x2E180501D3D68241dd0318c68fD9BE0AF1D519a1;
-    
-
 
     function setUp() public {
         // Get owner's private key
         ownerPrivateKey = vm.envUint("PRIVATE_KEY");
-        
+
         // Initialize contract
         bettingContract = BettingContract(BETTING_CONTRACT);
-        
+
         // Log current state
         console.log("Contract address:", address(bettingContract));
         console.log("Next pool ID:", bettingContract.nextPoolId());
@@ -63,11 +61,11 @@ contract GradePoolScript is Script {
 
         // Start broadcasting transactions
         vm.startBroadcast(ownerPrivateKey);
-        
+
         // Grade the pool
         bettingContract.gradeBet(poolId, responseOption);
         console.log("Successfully graded pool", poolId, "with response option", responseOption);
-        
+
         // Stop broadcasting transactions
         vm.stopBroadcast();
     }
