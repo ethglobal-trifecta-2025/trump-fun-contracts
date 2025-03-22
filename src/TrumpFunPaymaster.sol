@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {console} from "forge-std/console.sol";
 import {IPaymaster} from "@account-abstraction/contracts/interfaces/IPaymaster.sol";
 import {PackedUserOperation} from "@account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import {IEntryPoint} from "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
@@ -26,16 +27,15 @@ contract TrumpFunPaymaster is IPaymaster, Ownable {
     // Parameters
     uint256 public minDepositAmount; // Minimum deposit amount to accept transactions
     uint256 public gasPriceMarkup; // Gas price markup percentage (100 = 1%)
+    uint256 public minBetAmount; // Minimum bet amount in USD (1 = 1 USD)
 
     // Events
     event UserOperationSponsored(
-        address indexed user,
-        address indexed token,
-        uint256 actualTokenNeeded,
-        uint256 actualGasCost
+        address indexed user, address indexed token, uint256 actualTokenNeeded, uint256 actualGasCost
     );
     event DepositUpdated(uint256 newDepositAmount);
     event TokenRatioUpdated(address token, uint256 newRatio);
+    event MinBetAmountUpdated(uint256 newMinBetAmount);
 
     enum TokenType {
         USDC,
@@ -53,16 +53,13 @@ contract TrumpFunPaymaster is IPaymaster, Ownable {
      * @param _pointsToken PointsToken contract address
      * @param _usdcToken USDC token contract address
      */
-    constructor(
-        IEntryPoint _entryPoint,
-        IERC20 _pointsToken,
-        IERC20 _usdcToken
-    ) Ownable(msg.sender) {
+    constructor(IEntryPoint _entryPoint, IERC20 _pointsToken, IERC20 _usdcToken) Ownable(msg.sender) {
         entryPoint = _entryPoint;
         pointsToken = _pointsToken;
         usdcToken = _usdcToken;
         minDepositAmount = 0.01 ether; // Minimum deposit required
         gasPriceMarkup = 300; // 3% markup as default
+        minBetAmount = 1 * 10 ** 6; // 1 USD (with 6 decimals)
     }
 
     /**
@@ -97,6 +94,26 @@ contract TrumpFunPaymaster is IPaymaster, Ownable {
      */
     function setMinDepositAmount(uint256 _minDepositAmount) external onlyOwner {
         minDepositAmount = _minDepositAmount;
+    }
+
+    /**
+     * @dev Set minimum bet amount (in USD)
+     * @param _minBetAmount New minimum bet amount with 6 decimals (1000000 = 1 USD)
+     */
+    function setMinBetAmount(uint256 _minBetAmount) external onlyOwner {
+        minBetAmount = _minBetAmount;
+        emit MinBetAmountUpdated(_minBetAmount);
+    }
+
+    /**
+     * @dev Check if a bet amount meets the minimum requirement
+     * @param tokenAmount Amount of tokens to check (with 6 decimals)
+     * @param tokenType Type of token (USDC or PointsToken)
+     * @return True if the amount meets the minimum requirement
+     */
+    function isBetAmountValid(uint256 tokenAmount, TokenType tokenType) public view returns (bool) {
+        // Both USDC and PointsToken have 1:1 USD ratio, so we can compare directly
+        return tokenAmount >= minBetAmount;
     }
 
     /**
@@ -140,8 +157,9 @@ contract TrumpFunPaymaster is IPaymaster, Ownable {
         uint256 ethPriceInUsd = getEthToUsdPrice();
 
         // Calculate token amount with markup
-        // Both tokens are 6 decimals while ETH is 18 decimals
-        return (weiAmount * ethPriceInUsd * (10000 + gasPriceMarkup)) / (10000 * 1e12);
+        // ETH has 18 decimals, ETH price has 8 decimals, tokens have 6 decimals
+        // Need to convert to token decimals (6)
+        return (weiAmount * ethPriceInUsd * (10000 + gasPriceMarkup)) / (10000 * 1e20);
     }
 
     /**
@@ -160,20 +178,21 @@ contract TrumpFunPaymaster is IPaymaster, Ownable {
      * @return tokenType The selected token type
      * @return maxCost The maximum cost the user is willing to pay
      */
-    function _parsePaymasterData(bytes calldata paymasterAndData) 
-        internal pure 
-        returns (TokenType tokenType, uint256 maxCost) 
+    function _parsePaymasterData(bytes calldata paymasterAndData)
+        internal
+        pure
+        returns (TokenType tokenType, uint256 maxCost)
     {
-        // Ensure that paymasterAndData has the correct length 
+        // Ensure that paymasterAndData has the correct length
         require(paymasterAndData.length >= PAYMASTER_DATA_OFFSET + 64, "TrumpFunPaymaster: Invalid data");
-        
+
         // Extract tokenType and maxCost from the paymasterAndData
         bytes memory data = paymasterAndData[PAYMASTER_DATA_OFFSET:];
         (uint8 _tokenType, uint256 _maxCost) = abi.decode(data, (uint8, uint256));
-        
+
         // Validate token type
         require(_tokenType <= uint8(TokenType.PointsToken), "TrumpFunPaymaster: Invalid token");
-        
+
         return (TokenType(_tokenType), _maxCost);
     }
 
@@ -185,11 +204,10 @@ contract TrumpFunPaymaster is IPaymaster, Ownable {
      * @return context Context for the postOp call
      * @return validationData Signature and time-range of this operation
      */
-    function validatePaymasterUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash,
-        uint256 maxCost
-    ) external returns (bytes memory context, uint256 validationData) {
+    function validatePaymasterUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash, uint256 maxCost)
+        external
+        returns (bytes memory context, uint256 validationData)
+    {
         // Verify the call is from the EntryPoint
         require(msg.sender == address(entryPoint), "TrumpFunPaymaster: Sender not EntryPoint");
 
@@ -204,26 +222,26 @@ contract TrumpFunPaymaster is IPaymaster, Ownable {
 
         // Check user has enough tokens of the chosen type and approved the paymaster
         if (tokenType == TokenType.USDC) {
-            require(usdcToken.balanceOf(userOp.sender) >= requiredTokenAmount, 
-                "TrumpFunPaymaster: Not enough USDC");
-            require(usdcToken.allowance(userOp.sender, address(this)) >= requiredTokenAmount, 
-                "TrumpFunPaymaster: Not enough USDC allowance");
+            require(usdcToken.balanceOf(userOp.sender) >= requiredTokenAmount, "TrumpFunPaymaster: Not enough USDC");
+            require(
+                usdcToken.allowance(userOp.sender, address(this)) >= requiredTokenAmount,
+                "TrumpFunPaymaster: Not enough USDC allowance"
+            );
         } else {
-            require(pointsToken.balanceOf(userOp.sender) >= requiredTokenAmount, 
-                "TrumpFunPaymaster: Not enough PointsToken");
-            require(pointsToken.allowance(userOp.sender, address(this)) >= requiredTokenAmount, 
-                "TrumpFunPaymaster: Not enough PointsToken allowance");
+            require(
+                pointsToken.balanceOf(userOp.sender) >= requiredTokenAmount, "TrumpFunPaymaster: Not enough PointsToken"
+            );
+            require(
+                pointsToken.allowance(userOp.sender, address(this)) >= requiredTokenAmount,
+                "TrumpFunPaymaster: Not enough PointsToken allowance"
+            );
         }
 
         // Verify user's specified maximum cost
         require(maxTokenCost >= requiredTokenAmount, "TrumpFunPaymaster: Max cost too low");
 
         // Pack the context for postOp
-        bytes memory _context = abi.encode(
-            userOp.sender,
-            tokenType,
-            requiredTokenAmount
-        );
+        bytes memory _context = abi.encode(userOp.sender, tokenType, requiredTokenAmount);
 
         // Return success and context
         return (_context, SIG_VALIDATION_SUCCESS);
@@ -236,20 +254,15 @@ contract TrumpFunPaymaster is IPaymaster, Ownable {
      * @param actualGasCost Actual gas cost used in the transaction
      * @param actualUserOpFeePerGas The gas price for this UserOp
      */
-    function postOp(
-        PostOpMode mode,
-        bytes calldata context,
-        uint256 actualGasCost,
-        uint256 actualUserOpFeePerGas
-    ) external {
+    function postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost, uint256 actualUserOpFeePerGas)
+        external
+    {
         // Verify the call is from the EntryPoint
         require(msg.sender == address(entryPoint), "TrumpFunPaymaster: Sender not EntryPoint");
 
         // Extract context data
-        (address sender, TokenType tokenType, uint256 preChargeTokenAmount) = abi.decode(
-            context,
-            (address, TokenType, uint256)
-        );
+        (address sender, TokenType tokenType, uint256 preChargeTokenAmount) =
+            abi.decode(context, (address, TokenType, uint256));
 
         // Calculate actual token amount needed based on actual gas used
         uint256 actualTokenNeeded = convertEthToToken(actualGasCost);
@@ -276,4 +289,4 @@ contract TrumpFunPaymaster is IPaymaster, Ownable {
             }
         }
     }
-} 
+}

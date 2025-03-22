@@ -9,8 +9,9 @@ gas_reports = ["*"]
 via_ir = true
 
 remappings = [
-    "@account-abstraction/contracts=lib/account-abstraction/contracts/interfaces",
-    "@openzeppelin/contracts=lib/openzeppelin-contracts/contracts"
+    "@account-abstraction/contracts=lib/account-abstraction/contracts/",
+    "@openzeppelin/contracts=lib/openzeppelin-contracts/contracts",
+    "forge-std/=lib/forge-std/src/"
 ]
 
 [rpc_endpoints]
