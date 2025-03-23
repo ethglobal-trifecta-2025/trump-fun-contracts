@@ -236,15 +236,12 @@ contract BettingContract is Ownable {
 
         emit PoolClosed(poolId, responseOption);
 
-        // Automatically claim payouts for all bets in the pool if it's not a draw
-        if (!pool.isDraw) {
-            // Create a memory copy of the bet IDs array
-            uint256[] memory betIdsToProcess = new uint256[](pool.betIds.length);
-            for (uint256 i = 0; i < pool.betIds.length; i++) {
-                betIdsToProcess[i] = pool.betIds[i];
-            }
-            claimPayouts(betIdsToProcess);
+        // Create a memory copy of the bet IDs array to claim all bets in pool
+        uint256[] memory betIdsToProcess = new uint256[](pool.betIds.length);
+        for (uint256 i = 0; i < pool.betIds.length; i++) {
+            betIdsToProcess[i] = pool.betIds[i];
         }
+        claimPayouts(betIdsToProcess);
     }
 
     // This function sends payouts to users proactively when a bet is graded

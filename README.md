@@ -108,3 +108,27 @@ source .env
 forge script script/EndToEndTest.s.sol --rpc-url $BASE_SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast --verify --fork-url $BASE_SEPOLIA_RPC_URL
 ```
 
+### Using Management Scripts
+
+#### Grading a Pool
+
+To grade a prediction market pool (set the winning option):
+
+```bash
+# Grade pool ID 84 with option 0 as the winner
+forge script script/GradePoolSimple.s.sol:GradePoolSimpleScript --sig "run(uint256,uint256)" 84 0 --fork-url $BASE_SEPOLIA_RPC_URL --chain base-sepolia --broadcast -vvv
+```
+
+The first argument is the pool ID, and the second argument is the winning option (0 or 1, or 2 for a draw).
+
+#### Claiming Payouts for a Pool
+
+To claim payouts for all bets in a specific pool:
+
+```bash
+# Claim payouts for all bets in pool ID 84
+forge script script/ClaimPoolPayouts.s.sol --sig "run(uint256)" 84 --rpc-url $BASE_SEPOLIA_RPC_URL --chain base-sepolia --broadcast -vvv
+```
+
+This script automatically finds all bets in the specified pool and processes their payouts.
+
