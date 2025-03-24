@@ -1,3 +1,9 @@
+# THIS IS A BRANCH STAGING FIXES SHOULD WE BE SELECTED AS FINALISTS, PLEASE DO NOT MERGE THIS BRANCH INTO MAIN, PLEASE DO NOT INCLUDE IN JUDGING
+
+## If you see the above in main and Trifecta is ongoing, roll back whatever you did
+
+## If you see the above in main and Trifecta is over, please delete it
+
 # Trump.fun Prediction Market Platform
 
 An on-chain prediction market platform designed for placing bets on Trump's social media posts and his public actions.
@@ -14,7 +20,7 @@ Trump.fun is a decentralized prediction market focused on events related to Dona
 
 ## 📚 Technical Stack
 
-- **Network**: Base Sepolia (testnet) 
+- **Network**: Base Sepolia (testnet)
 - **Smart Contracts**: Solidity 0.8.24
 - **Development Framework**: Foundry
 
@@ -35,7 +41,6 @@ The platform consists of several smart contracts that work together:
 | USDC | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` | USD Coin on Base Sepolia |
 | BettingContract | `0x2E180501D3D68241dd0318c68fD9BE0AF1D519a1` | Manages prediction markets |
 | TrumpFunPaymaster | `0x9031A3eB126892EE71F8A332feb04Ab1f313aB48` | Enables gas payments in USDC/PointsToken |
-
 
 ## 🎲 Betting Contract Flow
 
@@ -66,32 +71,36 @@ The betting process follows these steps:
    - Platform fee (3%) is deducted
    - Remaining funds distributed to winners
 
-
 ### Setting Up the Development Environment
 
 1. Clone the repository
+
    ```bash
    git clone https://github.com/your-username/trump-fun-contracts.git
    cd trump-fun-contracts
    ```
 
 2. Install dependencies
+
    ```bash
    forge install
    ```
 
 3. Set up environment variables
+
    ```bash
    cp .env.example .env
    # Edit .env with your own values
    ```
 
 4. Compile contracts
+
    ```bash
    forge build
    ```
 
 5. Run tests
+
    ```bash
    forge test
    ```
@@ -131,4 +140,3 @@ forge script script/ClaimPoolPayouts.s.sol --sig "run(uint256)" 84 --rpc-url $BA
 ```
 
 This script automatically finds all bets in the specified pool and processes their payouts.
-
